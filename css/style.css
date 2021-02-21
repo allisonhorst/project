@@ -1,0 +1,18 @@
+@import url('https://fonts.googleapis.com/css2?family=Benne&family=Mada:wght@300;400&display=swap');
+
+h1 {
+  font-family: Benne;
+}
+
+h2 {
+  font-family: Benne;
+}
+
+h3 {
+  font-family: Benne;
+}
+
+body {
+  font-family: Mada;
+  font-weight: 400;
+}
