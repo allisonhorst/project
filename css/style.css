@@ -1,18 +1,30 @@
 @import url('https://fonts.googleapis.com/css2?family=Benne&family=Mada:wght@300;400&display=swap');
 
 h1 {
-  font-family: Benne;
+  font-family: Mada;
+  color: darkolivegreen;
 }
 
 h2 {
-  font-family: Benne;
+  font-family: Mada;
+  color: olivedrab;
 }
 
 h3 {
-  font-family: Benne;
+  font-family: Mada;
+  color: olive;
 }
 
 body {
   font-family: Mada;
-  font-weight: 400;
+  color: black;
+}
+
+a {
+  color: olive;
+}
+
+a:hover, a:focus {
+    color: olivedrab;
+    text-decoration: underline;
 }
