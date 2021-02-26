@@ -49,14 +49,16 @@ Participants should be able to:
     - Direct annotation (as an alternative to legends)
     - Repulsive labels (e.g. `ggrepel`)
     - Highlighting for clarity (e.g. with `gghighlight`)
-- A few new graph types to consider
-    - Marginal plot
-    - Beeswarm plots
-    - Heatmap
 - Compound figures
     - `patchwork`
     - Inset plots
-- A beautiful map in `ggplot2`
+- A few new graph types to consider
+    - Marginal plot
+    - Beeswarm plots with `ggbeeswarm`
+    - Heatmaps with `geom_tile()`
+    - A map! in `ggplot2`
+- Export & save your graphs
+
 
 
 # Citations and data
@@ -121,7 +123,7 @@ Allison will be working in R Markdown, but you can follow along in either an .Rm
 ## Attach R packages
 
 ```{r setup, include = FALSE}
-knitr::opts_chunk$set(echo = TRUE, message = FALSE)
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 ```
 
 ```{r}
@@ -445,8 +447,7 @@ What if we have a discrete variable? Let's make a boxplot of lizard lengths by s
 ggplot(data = lizards, aes(x = common_name, y = total_length)) +
   geom_boxplot(aes(fill = common_name), color = "black", show.legend = FALSE) +
   theme_minimal() +
-  coord_flip() +
-  scale_fill_paletteer_d()
+  coord_flip()
 ```
         
 ## In the weeds of themes (gridlines, panel colors)
@@ -476,13 +477,75 @@ p +
 
 # Watch Kara Woo's talk from RStudio Conference 2021!
 ```
+
 ## Direct annotation and thresholds
 
-Legends are hard for audiences. Aligning values with important thresholds described in a ficture captions is hard for audiences. 
+Legends are hard for audiences. Aligning values with important thresholds described in a figure captions is hard for audiences. It's not always possible, but depending on your presentation and the audience, consider adding direct annotation and thresholds to plots. 
+
+We'll do that with a few little tools:
+
+- `annotate()`: add annotation manually by location
+- `geom_hline()`: add a horizontal line
+- `geom_vline()`: add a vertical line
+
+```{r}
+p +
+  annotate("text", x = 100, y = 50, label = "COOL!", color = "purple") +
+  annotate("text", x = 400, y = 25, label = "WHOA.", color = "red") +
+  geom_hline(yintercept = 40, linetype = "dotted", color = "blue") +
+  geom_vline(xintercept = 20, linetype = "dashed", color = "green") +
+  theme_minimal()
+```
 
 ## Repulsive labels (e.g. `ggrepel`)
 
+Direct labeling with a bunch of groups is challenging - `ggrepel` is here to help! It makes automatic repulsive labels. Let's make a subset of Western Whiptails at the "sand" site, then add repulsive labels by toe number. 
+
+```{r}
+wwc_lizards <- lizards %>% 
+  filter(common_name =="western whiptail", site == "sand")
+
+ggplot(data = wwc_lizards, aes(x = total_length, y = weight)) +
+  geom_point() +
+  geom_text_repel(aes(label = toe_num), size = 3, max.overlaps = 20, show.legend = FALSE) 
+```
+
 ## Highlighting for clarity (e.g. with `gghighlight`)
+
+This can be particularly useful if you have made a bunch of observations or series, and you want to highlight some to make your audience's life easier. 
+
+Add `gghighlight()` to your `ggplot` to specify highlighting conditions. 
+
+```{r}
+p +
+  gghighlight(toe_num == 250, label_key = toe_num)
+
+p + 
+  aes(color = site) + # Best to include this in geom_ line instead of here...
+  gghighlight(site %in% c("cali", "grav"))
+
+# One more example: 
+q <- ggplot(data = lizards, aes(x = total_length, y = weight, group = common_name)) +
+  geom_line(aes(color = common_name)) +
+  gghighlight(max(weight, na.rm = TRUE) > 40)
+```
+# Compound & inset figures with `patchwork`
+
+Patchwork makes it easier to put multiple figures together into a single graphic -- and to do some efficient theming while you're at it. 
+
+Let's store a couple of different graphs (we already have `p` and `q` stored): 
+
+```{r}
+(p | q) & 
+  theme_minimal() # Applied to both plots! 
+
+z <- ggplot(data = lizards, aes(y = site, x = weight)) +
+  geom_boxplot(aes(fill = site), show.legend = FALSE)
+
+# Put them all together using PEMDAS structure
+((p | q) / z) & theme_dark()
+```
+
 
 # Explore some new graph types
 
@@ -549,11 +612,7 @@ ggplot(data = lizard_counts, aes(x = year, y = common_name)) +
   labs(x = "Year", y = "Lizard common name")
 ```
 
-# Export graphs with `ggsave()`
-
-# Compound & inset figures with `patchwork`
-
-# Make a map!
+## Make a map!
 
 ```{r}
 jornada_veg <- read_sf(here("data_raw","spatial_vegetation","JER Vegetation 1998.kmz")) %>% dplyr::select(Name) %>% 
@@ -574,6 +633,16 @@ ggplot() +
   scale_fill_paletteer_d(palette = "ggthemes::manyeys")
 ```
 
+# Export your graphs & figures
+
+Use `ggsave()` to export your figures, setting the dimensions, dpi, and more. The default in `ggsave()` is to save "the last plot that you displayed, using the size of the current graphics device." 
+
+See `?ggsave` for documentation. 
+
+```{r}
+ggsave(plot = p, filename = "my_awesome_plot.png", width = 5, height = 5)
+```
+
 # Learn more
 
 Here are some of my favorite resources for building advanced data visualization tools in `ggplot2`, learning about new types of graphs, and choosing an appropriate graph type: 
@@ -588,3 +657,5 @@ Here are some of my favorite resources for building advanced data visualization 
 
 - [The R Graph Gallery](https://www.r-graph-gallery.com/) by [Yan Holtz]()
 - [From Data to Viz](https://www.data-to-viz.com/) by [Yan Holtz](https://twitter.com/R_Graph_Gallery) and [Conor Healy](http://www.conor.fr/indexEN.html)
+
+## Other great resources & talks & things

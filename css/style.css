@@ -28,3 +28,11 @@ a:hover, a:focus {
     color: olivedrab;
     text-decoration: underline;
 }
+
+pre.r {
+  color: black;
+}
+
+span.hljs-comment {
+  color: teal;
+}
