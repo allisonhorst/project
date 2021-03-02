@@ -15,9 +15,12 @@ output:
 
 Assistant Teaching Professor, Bren School, UC Santa Barbara
 
-Email: ahorst@ucsb.edu
+- ahorst@ucsb.edu
+- [\@allison_horst](https://twitter.com/allison_horst)
 
-Twitter: [\@allison_horst](https://twitter.com/allison_horst)
+```{r, echo=FALSE, out.width="70%", fig.align = "left", fig.cap = "Illustration by Allison Horst"}
+knitr::include_graphics("../img/ggplot_masterpiece.jpg") 
+```
 
 # Welcome
 
@@ -40,24 +43,21 @@ Participants should be able to:
     - Labels
     - Facets (& facet grids vs facet wraps)
     - Getting things in order (e.g. fct_reorder)
-    - Position adjustment
-    - The legends things everyone always forgets 
 - Advanced customization in `ggplot2`
     - `scales` for thoughtful breaks and labels
-    - Better color schemes (+ `paletteer`!)
+    - ...and color schemes (+ `paletteer`!)
     - In the weeds of themes (gridlines, panel colors, margins, etc.)
     - Direct annotation (as an alternative to legends)
     - Repulsive labels (e.g. `ggrepel`)
     - Highlighting for clarity (e.g. with `gghighlight`)
-- Compound figures
-    - `patchwork`
-    - Inset plots
+- Compound figures with `patchwork`
 - A few new graph types to consider
     - Marginal plot
     - Beeswarm plots with `ggbeeswarm`
     - Heatmaps with `geom_tile()`
     - A map! in `ggplot2`
 - Export & save your graphs
+- Keep learning
 
 
 
@@ -82,10 +82,16 @@ Thank you to developers, sharers, teachers, and the entire R community for build
   https://bookdown.org/yihui/rmarkdown.
 - `sf`: Pebesma, E., 2018. Simple Features for R: Standardized Support for Spatial Vector
   Data. The R Journal 10 (1), 439-446, https://doi.org/10.32614/RJ-2018-009
+- `paletteer`: See AUTHORS file. (2021). paletteer: Comprehensive Collection of Color Palettes. R package version 1.3.0. https://github.com/EmilHvitfeldt/paletteer
+- `gapminder`: Jennifer Bryan (2017). gapminder: Data from Gapminder.
+  https://github.com/jennybc/gapminder, http://www.gapminder.org/data/,
+  https://doi.org/10.5281/zenodo.594018.
+- `janitor`:Sam Firke (2021). janitor: Simple Tools for Examining and Cleaning Dirty Data. R
+  package version 2.1.0. https://github.com/sfirke/janitor
   
 ## Lizard size measurement data
 
-Our data are from [Jornada Basin Long Term Ecological Research site](https://lter.jornada.nmsu.edu/) in New Mexico, part of the US Long Term Ecological Research (LTER) network: 
+Our data are a curated subset from [Jornada Basin Long Term Ecological Research site](https://lter.jornada.nmsu.edu/) in New Mexico, part of the US Long Term Ecological Research (LTER) network: 
 
 - Lightfoot, D. and W.G. Whitford. 2020. Lizard pitfall trap data from 11 NPP study locations at the Jornada Basin LTER site, 1989-2006 ver 37. Environmental Data Initiative. https://doi.org/10.6073/pasta/4a6e258fb49c31e222ecbbcfd128967f
 
@@ -100,6 +106,7 @@ There are 16 total variables in the `lizards.csv` data we'll read in. The ones w
 - `sex`: lizard sex (m = male; f = female; j = juvenile)
 - `sv_length`: snout-vent length (millimeters)
 - `total_length`: body length (millimeters)
+- `toe_num`: toe mark number
 - `weight`: body weight (grams)
 - `tail`: tail condition (b = broken; w = whole)
 
@@ -143,6 +150,9 @@ library(ggbeeswarm)
 # Spatial data simplified:
 library(sf)
 
+# And for another dataset we'll explore:
+library(gapminder)
+
 ```
 
 ## Read in the lizard data
@@ -154,11 +164,7 @@ lizards <- read_csv(here("data_tidy", "lizards.csv"))
 
 # `ggplot2` Basics Review
 
-First, we'll cover some `ggplot2` basics to create the foundation that we'll make our beautiful customized data visualization on. 
-
-## The grammar of graphics
-
-
+First, we'll cover some `ggplot2` basics to create the foundation that we'll make our great customized data visualization on. 
 
 ## The essentials
 
@@ -334,14 +340,44 @@ ggplot(data = lizard_counts, aes(y = fct_reorder(common_name, n), x = n)) +
 
 ```
 
-## Legends blitz
+## `ggplot` basics: synthesis examples
 
-Legends are notoriously not awesome to deal with in R. There are some basics that get you a long way though. Here are a few we can update already: 
+**Example 1:** A quick review of basics, including: 
 
-- Retitle legend
-- Change labels
+- `ggplot` essentials
+- aesthetic mapping
+- themes
+- `facet_wrap` & `facet_grid`
+- labels with `labs`
 
-And we'll learn a bunch more options later on.  
+```{r}
+ggplot(data = lizards, aes(x = total_length, y = weight)) +
+  geom_point(aes(color = common_name), 
+             fill = "black",
+             size = 2, 
+             shape = 21) +
+  theme_minimal() +
+  labs(x = "Total length (mm)",
+       y = "Weight (g)",
+       color = "Lizard species") +
+  facet_wrap(~common_name, scales = "free")
+```
+
+**Example 2:** Reminders of position, `facet_grid`, and factor reordering
+
+Let's make a stacked column graph of lizard species by site: 
+
+```{r}
+ggplot(data = lizards, aes(y = fct_infreq(common_name))) +
+  geom_bar(aes(fill = site)) +
+  theme_bw() +
+  labs(x = "Lizard counts",
+       y = "Species (common name)") +
+  facet_grid(sex ~ tail)
+
+# That annoying space below zero? Let's keep that in mind...
+
+```
 
 # Advanced `ggplot2` customization
 
@@ -369,13 +405,14 @@ The important thing: know *what type of variable you have on each axis* so that 
 - For continuous variables: `scale_*_continuous()`
 - For discrete variables: `scale_*_discrete()`
 
-Within those layers added to your plot, you can update the `breaks = ` and `labels = ` options. 
+Within those layers added to your plot, you can update the `breaks = `, `limits = `, `labels = ` and `expand = `options. 
 
 ```{r}
-p <- ggplot(data = lizards, aes(x = total_length, y = weight)) +
+ggplot(data = lizards, aes(x = total_length, y = weight)) +
   geom_point()
 
-p + 
+ggplot(data = lizards, aes(x = total_length, y = weight)) +
+  geom_point() +
   scale_x_continuous(breaks = c(0, 250, 500), 
                      limits = c(0, 500)) +
   scale_y_continuous(breaks = seq(from = 0, to = 70, by = 10), 
@@ -386,7 +423,8 @@ p +
 But you can also do so much more! For example, you can convert to a log scale: 
 
 ```{r}
-p + 
+ggplot(data = lizards, aes(x = total_length, y = weight)) +
+  geom_point() +
   scale_x_log10()
 ```
 
@@ -416,7 +454,7 @@ We've learned to use `scales` functions to update breaks and labels. It is also 
 
 Again, it is very important to know **what aesthetic you are trying to update.**
 
-For example, is it a **fill** aesthetic you're hoping to customize? Then you might use `scale_fill_*()`. But if it is a **color** aesthetic, you'd use `scale_color_*()` functions. 
+For example, is it a **fill** aesthetic you're hoping to customize? Then you might use `scale_fill_*()`. But if it is a **color** aesthetic, you'd use `scale_color_*()` functions. If it is the transparency, then `scale_alpha_*()`. If it is the shape, then `scale_shape_*()`. So make sure you know *which aesthetic you are hoping to change with scales!*
 
 ```{r}
 ggplot(data = lizards, aes(x = total_length, y = weight)) +
@@ -439,7 +477,34 @@ ggplot(data = lizards, aes(x = total_length, y = weight)) +
 
 ```
 
+There are also great options for *binning* colors for a continuous variable, including with the `scale_*_steps()` functions (see more: https://ggplot2.tidyverse.org/reference/scale_steps.html). For example, maybe in the graph above we want binned (instead of continuous gradient) color values:
 
+```{r}
+ggplot(data = lizards, aes(x = total_length, y = weight)) +
+  geom_point(aes(color = weight)) +
+  scale_color_steps(low = "red", high = "black")
+
+# Notice the binned legend - within bins all points are the same value. 
+```
+
+You can create a divergent binned scheme with `scale_*_steps2()`:
+
+
+```{r}
+ggplot(data = lizards, aes(x = total_length, y = weight)) +
+  geom_point(aes(color = total_length)) +
+  scale_color_steps2(low = "black",
+                     high = "red",
+                     midpoint = 150)
+```
+
+Or, to make your own bins, try `scale_*_stepsn()`:
+
+```{r}
+ggplot(data = lizards, aes(x = total_length, y = weight)) +
+  geom_point(aes(color = weight)) +
+  scale_color_stepsn(colors = c("orange","red","purple"))
+```
 
 What if we have a discrete variable? Let's make a boxplot of lizard lengths by species, then customize the fill color with a palette in `paletteer`: 
 
@@ -448,14 +513,51 @@ ggplot(data = lizards, aes(x = common_name, y = total_length)) +
   geom_boxplot(aes(fill = common_name), color = "black", show.legend = FALSE) +
   theme_minimal() +
   coord_flip()
+
+# But **order matters**, so let's make an ordered version: 
+
+lizards_mean <- lizards %>% 
+  mutate(common_name = fct_reorder(common_name, total_length, .fun = median))
+
+# Then make a graph (use View(palettes_d_names) to see other discrete palettes in {paletteer})
+
+ggplot(data = lizards_mean, aes(y = common_name, x = total_length)) +
+  geom_boxplot(aes(fill = common_name), show.legend = FALSE) +
+  scale_x_continuous(limits = c(0, 500)) +
+  scale_fill_paletteer_d(palette = "ggsci::default_gsea") +
+  labs(y = "Lizard species",
+       x = "Total length (mm)") +
+  theme_minimal()
 ```
+
+Cool let's try another one: Find counts of lizard by species, reorder factor levels by count, update aesthetic by color (removing redundant legend), customize color using something from `paletteer`:
+
+```{r}
+lizard_n <- lizards %>% 
+  count(common_name) %>% 
+  mutate(common_name = fct_reorder(common_name, n))
+
+ggplot(data = lizard_n, aes(y = common_name, x = n)) +
+  geom_col(aes(fill = common_name), show.legend = FALSE) +
+  scale_fill_paletteer_d("tidyquant::tq_dark") +
+  scale_x_continuous(expand = c(0,0), limits = c(0, 1200)) +
+  theme_bw() +
+  labs(x = "Common name", 
+       y = "Total count") +
+  theme(axis.title.y = element_text(angle = 0, vjust = 0.5))
+```
+
         
 ## In the weeds of themes (gridlines, panel colors)
 
 Ask yourself: do you need those gridlines? Only if your audience needs to know whether values are above or below meaningful values - which can be useful, but oftentimes gridlines are really overused and make an entire plot feel more cluttered. 
 
 We can update gridline frequency by changing breaks, but we may want to customize them in other ways, too. 
+
 ```{r}
+p <- ggplot(data = lizards, aes(x = total_length, y = weight)) +
+  geom_point()
+
 p + 
   theme(panel.grid = element_blank()) # removes all gridlines (major & minor)
 
@@ -467,7 +569,8 @@ p +
 
 p + 
   theme(panel.background = element_rect(color = "purple", size = 3, fill = "yellow"),
-        panel.grid.major = element_line(color = "orange"),
+        panel.grid.major.y = element_line(color = "orange"),
+        panel.grid.major.x = element_blank(),
         axis.text.x = element_text(color = "blue"),
         axis.text.y = element_text(color = "cyan"),
         axis.title.x = element_text(color = "green"),
@@ -495,7 +598,62 @@ p +
   geom_hline(yintercept = 40, linetype = "dotted", color = "blue") +
   geom_vline(xintercept = 20, linetype = "dashed", color = "green") +
   theme_minimal()
+
+# Or, have the value be determined based on a variable: 
+p +
+  geom_hline(yintercept = mean(lizards$weight), linetype = "dashed", color = "red") +
+  annotate("text", x = 350, y = mean(lizards$weight) + 2, label = "Mean weight", color = "red")
 ```
+
+### Apply what we've learned to something new! 
+
+This data is from the [Mono Basin Clearinghouse](http://monobasinresearch.org/), and contains lake level (feet above sea level) for Mono Lake - a terminal saline lake in eastern California. 
+
+Here are some important things to know when considering how to make our data viz: 
+
+- LA Department of Water & Power took water unrestricted from streams feeding into Mono Lake starting in 1941 
+- Unrestricted water diversions continued until the landmark 1983 California Supreme Court decision, led by the Mono Lake Committee, that "The public trust … is an affirmation of the duty of the state to protect the people’s common heritage of streams, lakes, marshlands and tidelands..."
+- From *The Mono Basin Ecosystem: Effects of Changing Lake Level, published in 1987 by the Mono Basin Ecosystem Study Committee, Board on Environmental Studies and Toxicology*: "If the lake fell to levels at which the birds’ food sources were adversely affected, the bird populations would be reduced. The decrease in availability of brine shrimp for food would begin to affect those birds relying on them – eared grebes and California gulls – at a salinity of 120 g/L (lake level of 6360 ft)."
+
+```{r}
+# Read in the data: 
+mono <- read_csv(here("data_tidy", "mono.csv"))
+```
+
+```{r}
+ggplot(data = mono, aes(x = year, y = lake_level)) +
+  geom_rect(aes(xmin = 1941, 
+                xmax = 1983, 
+                ymin = 6350, 
+                ymax = 6440), 
+            fill = "gray90") +
+  geom_line() +
+  labs(x = "\nYear",
+       y = "Lake surface level\n(feet above sea level)\n",
+       title = "Mono Lake levels (1850 - 2017)\n",
+       caption = "Data: Mono Basin Clearinghouse") +
+  scale_x_continuous(limits = c(1850, 2020), 
+                     expand = c(0,0),
+                     breaks = seq(1850, 2010, by = 20)) +
+  scale_y_continuous(limits = c(6350, 6440), 
+                     breaks = c(6370, 6400, 6430),
+                     expand = c(0,0), 
+                     labels = scales::label_comma()) +
+  annotate("text", x = 1962, y = 6425, 
+           label = "unrestricted diversions\n(1941 - 1983)",
+           size = 3) +
+  theme_light() +
+  theme(plot.title.position = "plot",
+        axis.text.y = element_text(face = "italic")) +
+  geom_hline(yintercept = 6360, linetype = "dashed") +
+  annotate("text", 
+           x = 1910, 
+           y = 6367, 
+           label = "Decreased shrimp abundance expected\n(6,360 feet above sea level)",
+           size = 3)
+  
+```
+
 
 ## Repulsive labels (e.g. `ggrepel`)
 
@@ -508,6 +666,16 @@ wwc_lizards <- lizards %>%
 ggplot(data = wwc_lizards, aes(x = total_length, y = weight)) +
   geom_point() +
   geom_text_repel(aes(label = toe_num), size = 3, max.overlaps = 20, show.legend = FALSE) 
+```
+
+Let's try it with a different dataset, `gapminder` ("Excerpt of the Gapminder data on life expectancy, GDP per capita, and population by country.") 
+
+```{r}
+gapminder %>% 
+  filter(year == 2002, continent == "Europe") %>% 
+  ggplot(aes(x = gdpPercap, y = lifeExp)) +
+  geom_point() + 
+  geom_text_repel(aes(label = country), size = 3)
 ```
 
 ## Highlighting for clarity (e.g. with `gghighlight`)
@@ -527,25 +695,25 @@ p +
 # One more example: 
 q <- ggplot(data = lizards, aes(x = total_length, y = weight, group = common_name)) +
   geom_line(aes(color = common_name)) +
-  gghighlight(max(weight, na.rm = TRUE) > 40)
+  gghighlight(max(weight, na.rm = TRUE) > 30)
 ```
-# Compound & inset figures with `patchwork`
+
+# Compound figures with `patchwork`
 
 Patchwork makes it easier to put multiple figures together into a single graphic -- and to do some efficient theming while you're at it. 
 
 Let's store a couple of different graphs (we already have `p` and `q` stored): 
 
 ```{r}
-(p | q) & 
-  theme_minimal() # Applied to both plots! 
+(p | q) & # & means it's applied to both plots! 
+  theme_minimal()
 
 z <- ggplot(data = lizards, aes(y = site, x = weight)) +
   geom_boxplot(aes(fill = site), show.legend = FALSE)
 
 # Put them all together using PEMDAS structure
-((p | q) / z) & theme_dark()
+((p | q) / z) & theme_dark() 
 ```
-
 
 # Explore some new graph types
 
@@ -585,7 +753,7 @@ ggMarginal(p, type = "boxplot", groupColour = TRUE)
 
 ```{r}
 ggplot(data = whiptails, aes(x = sex, y = weight)) +
-  geom_beeswarm() +
+  geom_beeswarm(size = 1) +
   geom_boxplot(fill = NA) +
   scale_x_discrete(labels = c("female","juvenile","male")) +
   theme_minimal()
@@ -614,7 +782,10 @@ ggplot(data = lizard_counts, aes(x = year, y = common_name)) +
 
 ## Make a map!
 
+Let's make a map using some of the skills we've learned to customize our ggplots: 
+
 ```{r}
+# First, read in the Jornada Basin vegetation data: 
 jornada_veg <- read_sf(here("data_raw","spatial_vegetation","JER Vegetation 1998.kmz")) %>% dplyr::select(Name) %>% 
   clean_names()
 
@@ -630,7 +801,17 @@ ggplot() +
           aes(fill = name),
           color = NA) +
   theme_minimal() +
-  scale_fill_paletteer_d(palette = "ggthemes::manyeys")
+  scale_fill_paletteer_d(palette = "ggthemes::manyeys") +
+  labs(x = "Longitude",
+       y = "Latitude",
+       fill = "Dominant vegetation:",
+       title = "Jornada Basin vegetation",
+       caption = "Data source: Jornada Basin LTER") +
+  theme(legend.position = "right",
+        plot.title.position = "plot",
+        plot.caption.position = "plot",
+        plot.caption = element_text(face = "italic", color = "gray30"),
+        axis.text = element_text(size = 5))
 ```
 
 # Export your graphs & figures
@@ -640,7 +821,7 @@ Use `ggsave()` to export your figures, setting the dimensions, dpi, and more. Th
 See `?ggsave` for documentation. 
 
 ```{r}
-ggsave(plot = p, filename = "my_awesome_plot.png", width = 5, height = 5)
+ggsave(filename = "my_awesome_map.png", width = 6, height = 4)
 ```
 
 # Learn more
@@ -657,5 +838,3 @@ Here are some of my favorite resources for building advanced data visualization 
 
 - [The R Graph Gallery](https://www.r-graph-gallery.com/) by [Yan Holtz]()
 - [From Data to Viz](https://www.data-to-viz.com/) by [Yan Holtz](https://twitter.com/R_Graph_Gallery) and [Conor Healy](http://www.conor.fr/indexEN.html)
-
-## Other great resources & talks & things

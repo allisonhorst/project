@@ -2,17 +2,17 @@
 
 h1 {
   font-family: Mada;
-  color: darkolivegreen;
+  color: indigo;
 }
 
 h2 {
   font-family: Mada;
-  color: olivedrab;
+  color: rebeccapurple;
 }
 
 h3 {
   font-family: Mada;
-  color: olive;
+  color: purple;
 }
 
 body {
@@ -21,11 +21,11 @@ body {
 }
 
 a {
-  color: olive;
+  color: purple;
 }
 
 a:hover, a:focus {
-    color: olivedrab;
+    color: purple;
     text-decoration: underline;
 }
 
@@ -35,4 +35,8 @@ pre.r {
 
 span.hljs-comment {
   color: teal;
+}
+
+li.tocify-item.list-group-item.active {
+  background-color: indigo;
 }
